@@ -1,22 +1,53 @@
 <!DOCTYPE HTML>
 <HTML>
   <style type="text/css">
+   html, body {
+    height: 100%;
+}
+
+   html {
+    display: table;
+    margin: auto;
+}
+
+   body {
+    display: table-cell;
+    vertical-align: middle;
+}
   #title_Text{
     font-size: 17px;
     font-style:normal;
     font-family: sans-serif;
+    align-items: center;
+    align-self: center;
+    text-decoration-style: solid;
+    text-decoration: underline;
+  }
+  #introduction
+  {
+    font-size: 15px;
+    font-style:normal;
+    font-family: sans-serif;
+    color: blue;
+  }
+  #listitems
+  {
+      font-size: 13px;
+      font-style:normal;
+      font-family: sans-serif;
+      color: blue;
   }
   #dropdown1 {
-            position: fixed;
+              position: fixed;
             margin-right: 20px;
             width: 250px;
-            font-size:10px;
+            font-size:13px;
         }
   #dropdown2 {
                 position: fixed;
                 margin-left: 270px;
                 width: 250px;
-                  font-size: 10px;
+                  font-size: 13px;
               }
 
   #multiselect{
@@ -71,7 +102,11 @@
   </head>
 
   <body>
-    <p id="title_Text"> Choose two food items from the drop down lists for the comparison. Specific nutrients can be checked for comparison.  </p>
+    <p id="title_Text"> Food Comparator : You are what you eat</p>
+    <p id="introduction"> Since life is all about choices and confusion that ensues,this application is to help you understand your food options, learn about the nutrients in them,</p>
+    <p id="introduction"> and make an informed choice about what you eat. You can compare any two items and choose the nutrients you would like to compare.</p>
+    <p id="introduction"> Source of data: https://ndb.nal.usda.gov/</p>
+    <p id="listitems"> Choose Item 1(7414 options available):&emsp;&emsp;&emsp; Choose Item 2(7414 options available):</p>
     <select id="dropdown1"></select>
     <select id="dropdown2"></select>
     <select id="multiselect" multiple="multiple"></select>
@@ -88,12 +123,7 @@
     var selection1="BUTTER,WITH SALT";
     var selection2="BUTTER,WITH SALT";
     var axis_loop=1;
-    var Nuti=[{"nutrients":"Carbohydrate(mg)"},
-              {"nutrients":"Fiber(mg)"},
-              {"nutrients":"Protein(mg)"},
-              {"nutrients":"Saturated Fat(mg)"},
-              {"nutrients":"Total Lipid(mg)"},
-            ];
+    var Nuti=[];
 
     d3.csv("./food_final.csv",function(data){
       data.forEach(function(row)
@@ -108,6 +138,7 @@
               if (c=='Category')
               {row[c]=row[c];}
               else {
+                Nuti.push({"nutrients":c});
                 row[c]=+row[c];
 
                     }
