@@ -1,0 +1,303 @@
+<!DOCTYPE HTML>
+<HTML>
+  <style type="text/css">
+  #title_Text{
+    font-size: 17px;
+    font-style:normal;
+    font-family: sans-serif;
+  }
+  #dropdown1 {
+            position: fixed;
+            margin-right: 20px;
+            width: 250px;
+            font-size:10px;
+        }
+  #dropdown2 {
+                position: fixed;
+                margin-left: 270px;
+                width: 250px;
+                  font-size: 10px;
+              }
+
+  #multiselect{
+    position:fixed;
+    margin-top: 50px;
+    width: 250px;
+  }
+   #checkbox_filter{
+     display: inline-table;
+     margin-top: 50px;
+     font-size: 10px;
+     font-weight: 100;
+     font-style: italic;
+     font-family: sans-serif;
+   }
+
+   .axis text {
+     font: 10px sans-serif;
+  }
+
+  .axis path,
+  .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+}
+
+.rectangle1 {
+	fill: steelblue;
+}
+
+.rectangle1:hover {
+	fill: orange;
+}
+
+.rectangle2 {
+	fill: red;
+}
+
+.rectangle2:hover {
+	fill:green;
+}
+
+
+
+  </style>
+
+  <head>
+    <title> Food Comparator: Compare any two items </title>
+    <script src="https://d3js.org/d3.v3.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+  </head>
+
+  <body>
+    <p id="title_Text"> Choose two food items from the drop down lists for the comparison. Specific nutrients can be checked for comparison.  </p>
+    <select id="dropdown1"></select>
+    <select id="dropdown2"></select>
+    <select id="multiselect" multiple="multiple"></select>
+    <!--<input type="checkbox" id="checkbox_filter"  checked> Carbohydrate(mg)
+    <input type="checkbox" id="checkbox_filter"  checked> Fiber(mg)
+    <input type="checkbox" id="checkbox_filter"  checked> Protein(mg)
+    <input type="checkbox" id="checkbox_filter"  checked> Saturated Fat(mg)
+    <input type="checkbox" id="checkbox_filter"  unchecked> Sugar Total(mg)!-->
+
+
+    <script type="text/javascript">
+    var nutrients=["Carbohydrate(mg)","Fiber(mg)","Protein(mg)","Saturated Fat(mg)","Total Lipid(mg)"];
+    //global plot variables
+    var selection1="BUTTER,WITH SALT";
+    var selection2="BUTTER,WITH SALT";
+    var axis_loop=1;
+    var Nuti=[{"nutrients":"Carbohydrate(mg)"},
+              {"nutrients":"Fiber(mg)"},
+              {"nutrients":"Protein(mg)"},
+              {"nutrients":"Saturated Fat(mg)"},
+              {"nutrients":"Total Lipid(mg)"},
+            ];
+
+    d3.csv("./food_final.csv",function(data){
+      data.forEach(function(row)
+        {
+        //code to process all values in the csv as integers.
+        columns=Object.keys(row);
+        columns.forEach(function(c)
+          {
+          if (c=='Description')
+              { row[c]=row[c];}
+          else {
+              if (c=='Category')
+              {row[c]=row[c];}
+              else {
+                row[c]=+row[c];
+
+                    }
+                }
+          });
+        });
+    //function call to visualize data.
+    show_description(data)});
+
+    function show_description(data){
+      var arr=[]; //array to populate drop down lists
+      data.forEach(function (row){
+        arr.push(row["Description"]);});
+    //drop down list to allow selection for item number 1
+    var dropdown1 = d3.select("#dropdown1")
+          .on('change',function() {
+            selection1 = d3.select(this).property('value');
+            plot_food1(selection1);//function to plot nutrients for selection1
+          })
+          .selectAll("option")
+          .data(arr)
+          .enter()
+          .append("option")
+          .text(function(option) { return option; });
+
+    //drop down list to allow selection for item number 2
+    var dropdown2=d3.select("#dropdown2")
+        .on('change', function() { selection2 = d3.select(this).property('value'); plot_food2(selection2); }) //function to plot nutrients for selection2}
+        .selectAll("option")
+        .data(arr)
+        .enter()
+        .append("option")
+        .text(function(option) { return option; })
+        .attr("transform","translate(100,100)");
+
+
+    var dropdown_nutrient=d3.select("#multiselect")
+            .on('change',function(){ var selections= $('#multiselect').val(); nutrients=selections;console.log(nutrients);axis_loop=0;display_Axis();})
+            .selectAll("option")
+            .data(Nuti)
+            .enter()
+            .append("option")
+            .text(function(option) { return option.nutrients; });
+
+    //describing svg
+    var margin = {top: 40, right: 40, bottom: 20, left: 20};
+    var padding = {top: 100, right: 100, bottom: 60, left: 100};
+    outerWidth = 960,
+    outerHeight = 500,
+    innerWidth = outerWidth - margin.left - margin.right,
+    innerHeight = outerHeight - margin.top - margin.bottom,
+    width = innerWidth - padding.left - padding.right,
+    height = innerHeight - padding.top - padding.bottom;
+
+    var svg = d3.select("body")
+                .append("svg")
+                .attr("width", outerWidth)
+                .attr("height", outerHeight)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + 200 + ")");
+    var food1 = svg.append("g").attr("class", "food1");
+    var food2 = svg.append("g").attr("class", "food2");
+
+    //handles for grouping bars based on item, used while plotting data in the plot functions
+
+
+    //Axis function
+    display_Axis();
+
+    function display_Axis()
+    {
+      if(axis_loop!=1)
+      {svg.selectAll("*").remove();
+      food1 = svg.append("g").attr("class", "food1");
+      food2 = svg.append("g").attr("class", "food2");}
+
+      console.log("axis function being called");
+      console.log("in display axis");
+      console.log(nutrients.length);
+      var x = d3.scale.ordinal()
+                .rangeRoundBands([0, 140*nutrients.length]);
+
+      var y = d3.scale.linear()
+                .range([height, 0]);
+
+      console.log(nutrients);
+      x.domain(nutrients.map(function(d) { return d; }));
+      y.domain([0, 100000]);
+
+      var xAxis = d3.svg.axis()
+              .scale(x)
+              .orient("bottom");
+
+      var yAxis = d3.svg.axis()
+              .scale(y)
+              .orient("left");
+
+
+      svg.append("g")
+              .attr("class", "x axis")
+              .call(xAxis)
+              .attr("transform", "translate(50," + height + ")");
+
+      var ass=svg.append("g")
+         .attr("class", "y axis")
+         .attr("transform", "translate(50,0)")
+         .call(yAxis);
+
+      plot_food1(selection1);
+      plot_food2(selection2);
+      //ass.exit().remove();
+    };
+
+
+    function plot_food1(val){
+      var ind = arr.indexOf(val);
+      var values = [];
+      var food_item_1 = [];
+
+      nutrients.forEach(function(value){
+        values.push(data[ind][value]);
+        food_item_1.push({"nutrients": value, "values": data[ind][value]});
+      });
+
+      console.log(val);
+      console.log(food_item_1);
+      var x = d3.scale.ordinal()
+                .rangeRoundBands([0, 140*nutrients.length]);
+
+      var y = d3.scale.linear()
+                .range([height, 0]);
+
+      x.domain(nutrients.map(function(d) { return d; }));
+      y.domain([0, 100000]);
+      var bw = 25;
+      var bars=food1.selectAll("rect")
+         .data(food_item_1,function(d){return d.values;});
+
+      bars.enter().append("g").attr("transform", "translate(110,0)")
+         .append("rect")
+         .attr("class", "rectangle1")
+         .attr("x", function(d) { return x(d.nutrients); })
+         .attr("y", function(d) { return y(d.values); })
+         .attr("width", bw)
+         .attr("height", function(d){return height-y(d.values);})
+
+
+      bars.exit().remove();
+    };
+
+    function plot_food2(val)
+    {
+
+      var ind=arr.indexOf(val);
+      var values = [];
+      var food_item_2 = [];
+
+      console.log(val);
+      console.log(food_item_2);
+
+      nutrients.forEach(function(value){
+        values.push(data[ind][value]);
+        food_item_2.push({"nutrients": value, "values": data[ind][value]});
+      });
+
+      var x = d3.scale.ordinal()
+                .rangeRoundBands([0, 140*nutrients.length]);
+
+      var y = d3.scale.linear()
+                .range([height, 0]);
+
+      x.domain(nutrients.map(function(d) { return d; }));
+      y.domain([0, 100000]);
+      var bw=25;
+
+      var bars=food2.selectAll("rect")
+                 .data(food_item_2,function(d){return d.values;});
+
+      bars.enter().append("g").attr("transform", "translate(135,0)")
+                 .append("rect")
+                 .attr("class", "rectangle2")
+                 .attr("x", function(d) { return x(d.nutrients); })
+                 .attr("y", function(d) { return y(d.values); })
+                 .attr("width", bw)
+                 .attr("height", function(d){return height-y(d.values);})
+
+      bars.exit().remove();
+    };
+};
+
+    </script>
+  </body>
+</HTML>
